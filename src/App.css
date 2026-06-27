@@ -1,8 +1,190 @@
-.app {
-  min-height: 100vh;
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 4rem;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: var(--apothecary);
+  color: var(--paper);
+  padding: 0.8rem 1.1rem;
+  border-radius: var(--radius-md);
+}
+
+.bar__mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+}
+
+.bar__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.bar__title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+
+.bar__tag {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: rgba(247, 244, 236, 0.78);
+}
+
+.hero {
+  padding: 2.25rem 0 0.5rem;
+}
+
+.hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  line-height: 1.18;
+  margin: 0 0 0.7rem;
+  max-width: 30ch;
+}
+
+.hero p {
+  color: var(--ink-soft);
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 46ch;
+  margin: 0;
+}
+
+.steps {
   display: flex;
   align-items: flex-start;
+  list-style: none;
+  gap: 0.5rem;
+  margin: 1.9rem 0 2rem;
+  padding: 0;
+}
+
+.step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+}
+
+.step:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: calc(50% + 15px);
+  width: calc(100% - 30px);
+  border-top: 1.5px dashed var(--sage-line);
+}
+
+.step--active:not(:first-child)::before,
+.step--done:not(:first-child)::before {
+  border-top-color: var(--apothecary);
+}
+
+.step__num {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem;
-  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  background: var(--sage);
+  color: var(--ink-soft);
+  border: 1.5px solid var(--sage-line);
+  position: relative;
+  z-index: 1;
+}
+
+.step--active .step__num {
+  background: var(--apothecary);
+  border-color: var(--apothecary);
+  color: var(--paper);
+}
+
+.step--done .step__num {
+  background: var(--apothecary-dark);
+  border-color: var(--apothecary-dark);
+  color: var(--paper);
+}
+
+.step__label {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.step--active .step__label,
+.step--done .step__label {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.ticket {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1.75rem 1.6rem 1.5rem;
+}
+
+.ticket::before,
+.ticket::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.ticket::before {
+  left: -10px;
+}
+
+.ticket::after {
+  right: -10px;
+}
+
+.footnote {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.footnote svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--apothecary);
+}
+
+@media (max-width: 480px) {
+  .step__label {
+    font-size: 0.7rem;
+  }
+  .bar__title {
+    font-size: 0.92rem;
+  }
 }

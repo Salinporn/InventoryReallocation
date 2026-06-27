@@ -1,5 +1,5 @@
 // PharmacyShuffler.tsx
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import {
   parseInventoryFile,
@@ -10,16 +10,25 @@ import {
 } from "../utils/pharmacyShuffle";
 import "./PharmacyShuffler.css";
 
-type Status = "idle" | "parsed" | "shuffled" | "error";
+export type ToolStatus = "idle" | "parsed" | "shuffled" | "error";
 
-export default function PharmacyShuffler() {
+interface PharmacyShufflerProps {
+  /** Called whenever the internal status changes, e.g. to drive a step indicator. */
+  onStatusChange?: (status: ToolStatus) => void;
+}
+
+export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerProps) {
   const [fileName, setFileName] = useState("");
   const [originalRows, setOriginalRows] = useState<InventoryRow[]>([]);
   const [shuffledRows, setShuffledRows] = useState<ShuffledRow[]>([]);
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<ToolStatus>("idle");
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [status, onStatusChange]);
 
   const reset = useCallback(() => {
     setFileName("");
@@ -71,17 +80,8 @@ export default function PharmacyShuffler() {
 
   return (
     <div className="pshuffle">
-      <header className="pshuffle__header">
-        <h2>Pharmacy Inventory Shuffle</h2>
-        <p>
-          Upload a stock sheet, shuffle storage locations within the same
-          shelf row and drug form, then download the result. The file is
-          processed entirely in your browser — nothing is uploaded or saved.
-        </p>
-      </header>
-
       <div
-        className={`pshuffle__dropzone${isDragging ? " pshuffle__dropzone--active" : ""}`}
+        className={`dropzone${isDragging ? " dropzone--active" : ""}`}
         onDrop={onDrop}
         onDragOver={(e) => {
           e.preventDefault();
@@ -89,31 +89,57 @@ export default function PharmacyShuffler() {
         }}
         onDragLeave={() => setIsDragging(false)}
         onClick={() => inputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+        }}
       >
         <input
           ref={inputRef}
           type="file"
           accept=".xlsx,.xls"
           onChange={onInputChange}
-          className="pshuffle__input"
+          className="dropzone__input"
+          aria-label="Upload inventory spreadsheet"
         />
-        <p className="pshuffle__dropzone-text">
-          {fileName ? `Loaded: ${fileName}` : "Drop an .xlsx file here, or click to browse"}
+        <svg className="dropzone__icon" viewBox="0 0 40 40" aria-hidden="true">
+          <path
+            d="M20 6v18m0-18 6 6m-6-6-6 6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          <path
+            d="M7 27v4a3 3 0 0 0 3 3h20a3 3 0 0 0 3-3v-4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+        <p className="dropzone__text">
+          {fileName ? `Loaded: ${fileName}` : "Drop your .xlsx file here, or click to browse"}
         </p>
+        <p className="dropzone__hint">Needs Med_Name, Current_Location and Drug_Form columns</p>
       </div>
 
       {error && (
-        <p className="pshuffle__error" role="alert">
+        <p className="error-banner" role="alert">
           {error}
         </p>
       )}
 
       {status === "parsed" && (
-        <div className="pshuffle__panel">
-          <p>{originalRows.length} item(s) loaded.</p>
-          <div className="pshuffle__actions">
-            <button onClick={handleShuffle}>Shuffle locations</button>
-            <button className="pshuffle__secondary" onClick={reset}>
+        <div className="panel" aria-live="polite">
+          <p className="panel__count">{originalRows.length} item(s) loaded</p>
+          <div className="actions">
+            <button className="btn btn--primary" onClick={handleShuffle}>
+              Shuffle locations
+            </button>
+            <button className="btn btn--ghost" onClick={reset}>
               Choose a different file
             </button>
           </div>
@@ -121,14 +147,16 @@ export default function PharmacyShuffler() {
       )}
 
       {status === "shuffled" && (
-        <div className="pshuffle__panel">
-          <p>{shuffledRows.length} item(s) shuffled.</p>
-          <div className="pshuffle__actions">
-            <button onClick={handleDownload}>Download shuffled .xlsx</button>
-            <button className="pshuffle__secondary" onClick={handleShuffle}>
+        <div className="panel" aria-live="polite">
+          <p className="panel__count">{shuffledRows.length} item(s) shuffled</p>
+          <div className="actions">
+            <button className="btn btn--accent" onClick={handleDownload}>
+              Download shuffled .xlsx
+            </button>
+            <button className="btn btn--ghost" onClick={handleShuffle}>
               Re-shuffle
             </button>
-            <button className="pshuffle__secondary" onClick={reset}>
+            <button className="btn btn--ghost" onClick={reset}>
               Start over
             </button>
           </div>
@@ -142,29 +170,48 @@ export default function PharmacyShuffler() {
 function PreviewTable({ rows, total }: { rows: ShuffledRow[]; total: number }) {
   if (rows.length === 0) return null;
   return (
-    <div className="pshuffle__preview">
-      <table className="pshuffle__table">
-        <thead>
-          <tr>
-            <th>Med_Name</th>
-            <th>Drug_Form</th>
-            <th>Current_Location</th>
-            <th>New_Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i}>
-              <td>{r.Med_Name}</td>
-              <td>{r.Drug_Form}</td>
-              <td>{r.Current_Location}</td>
-              <td>{r.New_Location}</td>
+    <div className="preview">
+      <p className="preview__legend">
+        <span>
+          <span className="legend-dot legend-dot--moved" /> moved
+        </span>
+        <span>
+          <span className="legend-dot legend-dot--same" /> unchanged
+        </span>
+      </p>
+      <div className="table-wrap">
+        <table className="results">
+          <thead>
+            <tr>
+              <th>Med_Name</th>
+              <th>Drug_Form</th>
+              <th>Current</th>
+              <th>New</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => {
+              const moved = r.New_Location !== r.Current_Location;
+              return (
+                <tr key={i}>
+                  <td>{r.Med_Name}</td>
+                  <td>{r.Drug_Form}</td>
+                  <td>
+                    <span className="code code--current">{r.Current_Location}</span>
+                  </td>
+                  <td>
+                    <span className={`code ${moved ? "code--moved" : "code--same"}`}>
+                      {r.New_Location}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       {total > rows.length && (
-        <p className="pshuffle__preview-note">
+        <p className="preview__note">
           Showing {rows.length} of {total} rows. Download the file to see all results.
         </p>
       )}
