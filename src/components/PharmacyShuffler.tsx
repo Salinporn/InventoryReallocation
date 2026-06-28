@@ -1,4 +1,3 @@
-// PharmacyShuffler.tsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import {
@@ -12,8 +11,11 @@ import "./PharmacyShuffler.css";
 
 export type ToolStatus = "idle" | "parsed" | "shuffled" | "error";
 
+function pluralize(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
 interface PharmacyShufflerProps {
-  /** Called whenever the internal status changes, e.g. to drive a step indicator. */
   onStatusChange?: (status: ToolStatus) => void;
 }
 
@@ -52,7 +54,11 @@ export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerPro
       setStatus("error");
       setOriginalRows([]);
       setShuffledRows([]);
-      setError(err instanceof Error ? err.message : "Could not read this file.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "We couldn't read this file. Please make sure it's a valid .xlsx spreadsheet and try again."
+      );
     }
   }, []);
 
@@ -123,7 +129,9 @@ export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerPro
         <p className="dropzone__text">
           {fileName ? `Loaded: ${fileName}` : "Drop your .xlsx file here, or click to browse"}
         </p>
-        <p className="dropzone__hint">Needs Med_Name, Current_Location and Drug_Form columns</p>
+        <p className="dropzone__hint">
+          Your spreadsheet should include medicine name, current location, and drug form columns
+        </p>
       </div>
 
       {error && (
@@ -134,7 +142,7 @@ export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerPro
 
       {status === "parsed" && (
         <div className="panel" aria-live="polite">
-          <p className="panel__count">{originalRows.length} item(s) loaded</p>
+          <p className="panel__count">{pluralize(originalRows.length, "item")} loaded</p>
           <div className="actions">
             <button className="btn btn--primary" onClick={handleShuffle}>
               Shuffle locations
@@ -148,7 +156,7 @@ export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerPro
 
       {status === "shuffled" && (
         <div className="panel" aria-live="polite">
-          <p className="panel__count">{shuffledRows.length} item(s) shuffled</p>
+          <p className="panel__count">{pluralize(shuffledRows.length, "item")} shuffled</p>
           <div className="actions">
             <button className="btn btn--accent" onClick={handleDownload}>
               Download shuffled .xlsx
@@ -183,10 +191,10 @@ function PreviewTable({ rows, total }: { rows: ShuffledRow[]; total: number }) {
         <table className="results">
           <thead>
             <tr>
-              <th>Med_Name</th>
-              <th>Drug_Form</th>
-              <th>Current</th>
-              <th>New</th>
+              <th>Medicine</th>
+              <th>Form</th>
+              <th>Current location</th>
+              <th>New location</th>
             </tr>
           </thead>
           <tbody>
@@ -212,7 +220,7 @@ function PreviewTable({ rows, total }: { rows: ShuffledRow[]; total: number }) {
       </div>
       {total > rows.length && (
         <p className="preview__note">
-          Showing {rows.length} of {total} rows. Download the file to see all results.
+          Showing {rows.length} of {total} items. Download the file to see everything.
         </p>
       )}
     </div>
