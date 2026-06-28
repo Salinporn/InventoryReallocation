@@ -1,7 +1,3 @@
-// pharmacyShuffle.ts
-// Pure, framework-agnostic logic for the Pharmacy Inventory shuffler.
-// Requires: npm install xlsx
-
 import * as XLSX from "xlsx";
 
 export interface InventoryRow {
@@ -16,23 +12,17 @@ export interface ShuffledRow extends InventoryRow {
 
 const REQUIRED_COLUMNS = ["Med_Name", "Current_Location", "Drug_Form"] as const;
 
-/**
- * Pulls the matchable key out of a header. "ชื่อยา (Med_Name)" -> "Med_Name".
- * Headers with no parentheses are returned as-is.
- */
+const COLUMN_LABELS: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
+  Med_Name: "medicine name",
+  Current_Location: "current location",
+  Drug_Form: "drug form",
+};
+
 function extractColumnKey(header: string): string {
   const match = header.match(/\(([^)]+)\)/);
   return (match ? match[1] : header).trim();
 }
 
-/**
- * Reads an .xlsx file's first sheet into typed rows.
- * Throws a descriptive Error if required columns are missing.
- *
- * Header matching is tolerant of bilingual headers like
- * "ชื่อยา (Med_Name)" — it matches on the text inside the parentheses
- * if present, otherwise on the whole header, case-insensitively.
- */
 export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheetName = workbook.SheetNames[0];
@@ -42,7 +32,7 @@ export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
   });
 
   if (rows.length === 0) {
-    throw new Error("The spreadsheet has no data rows.");
+    throw new Error("This spreadsheet doesn't contain any data rows. Please check the file and try again.");
   }
 
   const headers = Object.keys(rows[0]);
@@ -57,10 +47,11 @@ export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
 
   const missing = REQUIRED_COLUMNS.filter((col) => !columnMap[col]);
   if (missing.length > 0) {
+    const friendlyMissing = missing.map((col) => COLUMN_LABELS[col]);
     throw new Error(
-      `The Excel file is missing required column(s): ${missing.join(
+      `Your spreadsheet is missing column(s) for: ${friendlyMissing.join(
         ", "
-      )}. Found headers: ${headers.join(", ")}`
+      )}. Please check the header row and try again.`
     );
   }
 
@@ -71,16 +62,11 @@ export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
   }));
 }
 
-/**
- * Extracts the shelf/row level from a location code like "A1-08-02" -> "08".
- * Mirrors the Python: x.split('-')[1] if available, else 'Unknown'.
- */
 function getRowLevel(location: string): string {
   const parts = location.split("-");
   return parts.length > 1 ? parts[1] : "Unknown";
 }
 
-/** Fisher-Yates shuffle, returns a new array (does not mutate input). */
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -90,11 +76,6 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
-/**
- * Shuffles Current_Location values within groups that share the same
- * Row_Level + Drug_Form, exactly like the reference Python script's
- * groupby('Row_Level' + '_' + 'Drug_Form') + random.shuffle logic.
- */
 export function shuffleInventory(rows: InventoryRow[]): ShuffledRow[] {
   const groups = new Map<string, number[]>();
 
@@ -124,11 +105,6 @@ export function shuffleInventory(rows: InventoryRow[]): ShuffledRow[] {
   }));
 }
 
-/**
- * Builds an .xlsx workbook from shuffled rows and triggers a browser
- * download. Nothing is sent to a server or persisted anywhere — the
- * workbook is built and downloaded entirely in memory.
- */
 export function exportShuffledInventory(
   rows: ShuffledRow[],
   fileName = "shuffled_pharmacy_inventory.xlsx"

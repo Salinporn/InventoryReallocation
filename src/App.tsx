@@ -3,8 +3,8 @@ import PharmacyShuffler, { type ToolStatus } from "./components/PharmacyShuffler
 import "./App.css";
 
 const STEPS: { label: string; statuses: ToolStatus[] }[] = [
-  { label: "Upload sheet", statuses: ["idle", "error"] },
-  { label: "Shuffle locations", statuses: ["parsed"] },
+  { label: "Upload Inventory", statuses: ["idle", "error"] },
+  { label: "Generate New Locations", statuses: ["parsed"] },
   { label: "Download result", statuses: ["shuffled"] },
 ];
 
@@ -27,17 +27,16 @@ function App() {
           <path d="M5 11h14v2H5z" fill="var(--paper)" />
         </svg>
         <div className="bar__text">
-          <span className="bar__title">Pharmacy Inventory Shuffle</span>
-          <span className="bar__tag">RX · CLIENT-SIDE TOOL</span>
+          <span className="bar__title">Pharmacy Inventory Reallocation</span>
+          <span className="bar__tag">RX · PRIVATE &amp; SECURE</span>
         </div>
       </header>
 
       <section className="hero">
-        <h1>Reshelve stock without losing the floor plan.</h1>
+        <h1>Reassign medication storage locations automatically.</h1>
         <p>
-          Upload your inventory sheet, shuffle storage bins within the same
-          shelf row and drug form, and download the result. The file never
-          leaves your browser.
+          Upload your pharmacy inventory spreadsheet, shuffle storage locations within
+          the same shelf row and drug form, then download the result.
         </p>
       </section>
 
@@ -64,8 +63,7 @@ function App() {
             fill="currentColor"
           />
         </svg>
-        Processed entirely on your device — no upload, no logging, no storage.
-        Refreshing the page clears everything.
+        Processed entirely on your device. Your spreadsheet is never uploaded, stored, or logged. Refresh the page to start over.
       </p>
     </div>
   );
