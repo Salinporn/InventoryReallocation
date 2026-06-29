@@ -35,8 +35,8 @@ function App() {
       <section className="hero">
         <h1>Reassign medication storage locations automatically.</h1>
         <p>
-          Upload your pharmacy inventory spreadsheet, shuffle storage locations within
-          the same shelf row and drug form, then download the result.
+          Upload your pharmacy inventory spreadsheet, shuffle storage positions
+          across the whole list, then download the result.
         </p>
       </section>
 
