@@ -1,21 +1,27 @@
 import * as XLSX from "xlsx";
 
 export interface InventoryRow {
-  Med_Name: string;
-  Drug_Form: string;
-  Current_Location: string;
+  Stock_Code: string;
+  Drug_Name: string;
+  Position: string;
 }
 
 export interface ShuffledRow extends InventoryRow {
-  New_Location: string;
+  New_Position: string;
 }
 
-const REQUIRED_COLUMNS = ["Med_Name", "Current_Location", "Drug_Form"] as const;
+const REQUIRED_COLUMNS = ["Stock_Code", "Drug_Name", "Position"] as const;
 
 const COLUMN_LABELS: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
-  Med_Name: "medicine name",
-  Current_Location: "current location",
-  Drug_Form: "drug form",
+  Stock_Code: "stock code",
+  Drug_Name: "drug name",
+  Position: "position",
+};
+
+const HEADER_ALIASES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
+  Stock_Code: "Stock Code",
+  Drug_Name: "Drug Name",
+  Position: "Position",
 };
 
 function extractColumnKey(header: string): string {
@@ -39,9 +45,11 @@ export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
   const columnMap: Partial<Record<(typeof REQUIRED_COLUMNS)[number], string>> = {};
 
   for (const col of REQUIRED_COLUMNS) {
-    const match = headers.find(
-      (h) => extractColumnKey(h).toLowerCase() === col.toLowerCase()
-    );
+    const alias = HEADER_ALIASES[col].toLowerCase();
+    const match = headers.find((h) => {
+      const key = extractColumnKey(h).toLowerCase();
+      return key === col.toLowerCase() || key === alias;
+    });
     if (match) columnMap[col] = match;
   }
 
@@ -56,15 +64,10 @@ export function parseInventoryFile(buffer: ArrayBuffer): InventoryRow[] {
   }
 
   return rows.map((row) => ({
-    Med_Name: String(row[columnMap.Med_Name!] ?? "").trim(),
-    Drug_Form: String(row[columnMap.Drug_Form!] ?? "").trim(),
-    Current_Location: String(row[columnMap.Current_Location!] ?? "").trim(),
+    Stock_Code: String(row[columnMap.Stock_Code!] ?? "").trim(),
+    Drug_Name: String(row[columnMap.Drug_Name!] ?? "").trim(),
+    Position: String(row[columnMap.Position!] ?? "").trim(),
   }));
-}
-
-function getRowLevel(location: string): string {
-  const parts = location.split("-");
-  return parts.length > 1 ? parts[1] : "Unknown";
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -77,31 +80,11 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 export function shuffleInventory(rows: InventoryRow[]): ShuffledRow[] {
-  const groups = new Map<string, number[]>();
-
-  rows.forEach((row, idx) => {
-    const key = `${getRowLevel(row.Current_Location)}_${row.Drug_Form}`;
-    const indices = groups.get(key);
-    if (indices) {
-      indices.push(idx);
-    } else {
-      groups.set(key, [idx]);
-    }
-  });
-
-  const newLocations = new Array<string>(rows.length);
-
-  groups.forEach((indices) => {
-    const locationsInGroup = indices.map((i) => rows[i].Current_Location);
-    const shuffled = shuffleArray(locationsInGroup);
-    indices.forEach((rowIdx, i) => {
-      newLocations[rowIdx] = shuffled[i];
-    });
-  });
+  const shuffledPositions = shuffleArray(rows.map((row) => row.Position));
 
   return rows.map((row, idx) => ({
     ...row,
-    New_Location: newLocations[idx],
+    New_Position: shuffledPositions[idx],
   }));
 }
 
@@ -110,10 +93,10 @@ export function exportShuffledInventory(
   fileName = "shuffled_pharmacy_inventory.xlsx"
 ): void {
   const exportData = rows.map((r) => ({
-    Med_Name: r.Med_Name,
-    Drug_Form: r.Drug_Form,
-    Current_Location: r.Current_Location,
-    New_Location: r.New_Location,
+    "Stock Code": r.Stock_Code,
+    "Drug Name": r.Drug_Name,
+    Position: r.Position,
+    "New Position": r.New_Position,
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(exportData);

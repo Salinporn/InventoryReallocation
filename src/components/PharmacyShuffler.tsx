@@ -130,7 +130,7 @@ export default function PharmacyShuffler({ onStatusChange }: PharmacyShufflerPro
           {fileName ? `Loaded: ${fileName}` : "Drop your .xlsx file here, or click to browse"}
         </p>
         <p className="dropzone__hint">
-          Your spreadsheet should include medicine name, current location, and drug form columns
+          Your spreadsheet should include Stock Code, Drug Name, and Position columns
         </p>
       </div>
 
@@ -191,25 +191,25 @@ function PreviewTable({ rows, total }: { rows: ShuffledRow[]; total: number }) {
         <table className="results">
           <thead>
             <tr>
-              <th>Medicine</th>
-              <th>Form</th>
-              <th>Current location</th>
-              <th>New location</th>
+              <th>Stock Code</th>
+              <th>Drug Name</th>
+              <th>Current position</th>
+              <th>New position</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => {
-              const moved = r.New_Location !== r.Current_Location;
+              const moved = r.New_Position !== r.Position;
               return (
                 <tr key={i}>
-                  <td>{r.Med_Name}</td>
-                  <td>{r.Drug_Form}</td>
+                  <td>{r.Stock_Code}</td>
+                  <td>{r.Drug_Name}</td>
                   <td>
-                    <span className="code code--current">{r.Current_Location}</span>
+                    <span className="code code--current">{r.Position}</span>
                   </td>
                   <td>
                     <span className={`code ${moved ? "code--moved" : "code--same"}`}>
-                      {r.New_Location}
+                      {r.New_Position}
                     </span>
                   </td>
                 </tr>
